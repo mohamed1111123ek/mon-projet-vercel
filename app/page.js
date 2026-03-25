@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 const styles = {
   page: {
@@ -13,7 +13,7 @@ const styles = {
   },
   card: {
     width: "100%",
-    maxWidth: "420px",
+    maxWidth: "560px",
     backgroundColor: "#ffffff",
     borderRadius: "18px",
     boxShadow: "0 20px 45px rgba(15, 23, 42, 0.08)",
@@ -76,6 +76,52 @@ const styles = {
     fontSize: "0.95rem",
     textAlign: "center",
   },
+  divider: {
+    height: "1px",
+    backgroundColor: "#e5e7eb",
+    margin: "28px 0 24px",
+  },
+  sectionTitle: {
+    margin: "0 0 6px",
+    fontSize: "1.1rem",
+    fontWeight: 700,
+  },
+  sectionDescription: {
+    margin: "0 0 16px",
+    fontSize: "0.9rem",
+    color: "#6b7280",
+  },
+  list: {
+    display: "grid",
+    gap: "12px",
+  },
+  userCard: {
+    border: "1px solid #e5e7eb",
+    borderRadius: "14px",
+    padding: "14px",
+    backgroundColor: "#f9fafb",
+  },
+  userName: {
+    margin: 0,
+    fontSize: "1rem",
+    fontWeight: 700,
+    color: "#111827",
+  },
+  userMeta: {
+    margin: "6px 0 0",
+    fontSize: "0.9rem",
+    color: "#4b5563",
+    lineHeight: 1.5,
+  },
+  emptyState: {
+    margin: 0,
+    padding: "16px",
+    borderRadius: "14px",
+    backgroundColor: "#f9fafb",
+    color: "#6b7280",
+    textAlign: "center",
+    fontSize: "0.95rem",
+  },
 };
 
 const initialForm = {
@@ -87,11 +133,41 @@ export default function HomePage() {
   const [formData, setFormData] = useState(initialForm);
   const [pdfFile, setPdfFile] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isUsersLoading, setIsUsersLoading] = useState(true);
   const [feedback, setFeedback] = useState({
     type: "",
     text: "",
   });
+  const [users, setUsers] = useState([]);
+  const [usersError, setUsersError] = useState("");
   const fileInputRef = useRef(null);
+
+  useEffect(() => {
+    loadUsers();
+  }, []);
+
+  async function loadUsers() {
+    setIsUsersLoading(true);
+    setUsersError("");
+
+    try {
+      const response = await fetch("/api/save-user", {
+        method: "GET",
+        cache: "no-store",
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Impossible de charger les utilisateurs.");
+      }
+
+      setUsers(Array.isArray(data.users) ? data.users : []);
+    } catch (error) {
+      setUsersError(error.message || "Impossible de charger les utilisateurs.");
+    } finally {
+      setIsUsersLoading(false);
+    }
+  }
 
   function handleChange(event) {
     const { name, value } = event.target;
@@ -143,6 +219,13 @@ export default function HomePage() {
         text: "Utilisateur et PDF enregistres avec succes.",
       });
       setFormData(initialForm);
+      setUsers((current) => {
+        if (data.user) {
+          return [data.user, ...current];
+        }
+
+        return current;
+      });
       setPdfFile(null);
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
@@ -246,6 +329,46 @@ export default function HomePage() {
             </p>
           ) : null}
         </form>
+
+        <div style={styles.divider} />
+
+        <div>
+          <h2 style={styles.sectionTitle}>Utilisateurs enregistres</h2>
+          <p style={styles.sectionDescription}>
+            Cette liste lit les 20 derniers documents directement depuis
+            MongoDB.
+          </p>
+
+          {isUsersLoading ? (
+            <p style={styles.emptyState}>Chargement des utilisateurs...</p>
+          ) : usersError ? (
+            <p style={{ ...styles.emptyState, color: "#dc2626" }}>{usersError}</p>
+          ) : users.length === 0 ? (
+            <p style={styles.emptyState}>Aucun utilisateur enregistre pour le moment.</p>
+          ) : (
+            <div style={styles.list}>
+              {users.map((user, index) => (
+                <article
+                  key={user.id || `${user.nom}-${user.prenom}-${user.createdAt}-${index}`}
+                  style={styles.userCard}
+                >
+                  <p style={styles.userName}>
+                    {user.prenom} {user.nom}
+                  </p>
+                  <p style={styles.userMeta}>
+                    PDF : {user.pdf?.filename || "Aucun fichier"}
+                  </p>
+                  <p style={styles.userMeta}>
+                    Ajoute le{" "}
+                    {user.createdAt
+                      ? new Date(user.createdAt).toLocaleString("fr-FR")
+                      : "date inconnue"}
+                  </p>
+                </article>
+              ))}
+            </div>
+          )}
+        </div>
       </section>
     </main>
   );

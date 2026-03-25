@@ -3,8 +3,64 @@ import { NextResponse } from "next/server";
 import { getDatabase } from "../../../mongodb";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 const MAX_PDF_SIZE = 5 * 1024 * 1024;
+
+function formatUser(document) {
+  return {
+    id: document._id.toString(),
+    nom: document.nom,
+    prenom: document.prenom,
+    createdAt: document.createdAt,
+    pdf: document.pdf
+      ? {
+          filename: document.pdf.filename,
+          contentType: document.pdf.contentType,
+          size: document.pdf.size,
+        }
+      : null,
+  };
+}
+
+export async function GET() {
+  try {
+    const db = await getDatabase();
+    const users = await db
+      .collection("users")
+      .find(
+        {},
+        {
+          projection: {
+            nom: 1,
+            prenom: 1,
+            createdAt: 1,
+            "pdf.filename": 1,
+            "pdf.contentType": 1,
+            "pdf.size": 1,
+          },
+        }
+      )
+      .sort({ createdAt: -1 })
+      .limit(20)
+      .toArray();
+
+    return NextResponse.json({
+      success: true,
+      users: users.map(formatUser),
+    });
+  } catch (error) {
+    console.error("Erreur API GET /api/save-user:", error);
+
+    return NextResponse.json(
+      {
+        success: false,
+        error: "Impossible de lire les donnees.",
+      },
+      { status: 500 }
+    );
+  }
+}
 
 export async function POST(request) {
   try {
@@ -67,10 +123,11 @@ export async function POST(request) {
       );
     }
 
+    const createdAt = new Date();
     const pdfBuffer = Buffer.from(await pdf.arrayBuffer());
     const db = await getDatabase();
 
-    await db.collection("users").insertOne({
+    const result = await db.collection("users").insertOne({
       nom,
       prenom,
       pdf: {
@@ -79,10 +136,23 @@ export async function POST(request) {
         size: pdf.size,
         data: pdfBuffer,
       },
-      createdAt: new Date(),
+      createdAt,
     });
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({
+      success: true,
+      user: {
+        id: result.insertedId.toString(),
+        nom,
+        prenom,
+        createdAt: createdAt.toISOString(),
+        pdf: {
+          filename: pdf.name,
+          contentType: pdf.type || "application/pdf",
+          size: pdf.size,
+        },
+      },
+    });
   } catch (error) {
     const isFormDataError =
       error?.message?.toLowerCase().includes("formdata") ||
