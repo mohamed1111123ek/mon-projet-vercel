@@ -12,6 +12,10 @@ mon-projet/
     api/
       save-user/
         route.js
+      users/
+        [id]/
+          pdf/
+            route.js
   mongodb.js
   package.json
   .env.local.example
@@ -47,7 +51,7 @@ L'application sera disponible sur `http://localhost:3000`.
 
 ## Variables d'environnement
 
-Créez un fichier `.env.local` en local pour les tests, puis ajoutez exactement la meme variable dans Vercel :
+Creez un fichier `.env.local` en local pour les tests, puis ajoutez exactement la meme variable dans Vercel :
 
 ```bash
 MONGODB_URI=...
@@ -58,6 +62,7 @@ MONGODB_URI=...
 - La page `/` affiche un formulaire avec `nom`, `prenom` et un upload PDF.
 - La page lit aussi les 20 derniers utilisateurs depuis MongoDB et les affiche sous le formulaire.
 - La route `GET /api/save-user` retourne la liste des utilisateurs sans le contenu binaire du PDF.
+- La route `GET /api/users/[id]/pdf` permet de telecharger le PDF enregistre pour un utilisateur.
 - La route `POST /api/save-user` recoit un formulaire `multipart/form-data`.
 - La route valide et nettoie les champs texte, verifie le PDF et impose une taille maximale de 5 Mo.
 - Les donnees sont enregistrees dans la base `test_db`, collection `users`.

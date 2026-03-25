@@ -113,6 +113,19 @@ const styles = {
     color: "#4b5563",
     lineHeight: 1.5,
   },
+  downloadLink: {
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: "10px",
+    padding: "10px 12px",
+    borderRadius: "10px",
+    backgroundColor: "#e5e7eb",
+    color: "#111827",
+    textDecoration: "none",
+    fontSize: "0.92rem",
+    fontWeight: 600,
+  },
   emptyState: {
     margin: 0,
     padding: "16px",
@@ -358,6 +371,14 @@ export default function HomePage() {
                   <p style={styles.userMeta}>
                     PDF : {user.pdf?.filename || "Aucun fichier"}
                   </p>
+                  {user.pdf && user.id ? (
+                    <a
+                      href={`/api/users/${user.id}/pdf`}
+                      style={styles.downloadLink}
+                    >
+                      Telecharger le PDF
+                    </a>
+                  ) : null}
                   <p style={styles.userMeta}>
                     Ajoute le{" "}
                     {user.createdAt
