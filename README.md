@@ -1,0 +1,83 @@
+# mon-projet
+
+Projet Next.js App Router minimal en JavaScript avec backend integre et MongoDB Atlas.
+
+## Structure
+
+```text
+mon-projet/
+  app/
+    layout.js
+    page.js
+    api/
+      save-user/
+        route.js
+  mongodb.js
+  package.json
+  .env.local.example
+  README.md
+```
+
+## Prerequis
+
+- Node.js 18.17 ou plus recent
+- Une base MongoDB Atlas avec une chaine de connexion valide
+
+## Installation
+
+1. Installez les dependances :
+
+```bash
+npm install
+```
+
+2. Creez un fichier `.env.local` a partir de l'exemple puis renseignez votre URI Atlas :
+
+```bash
+MONGODB_URI=...
+```
+
+3. Lancez le projet en local :
+
+```bash
+npm run dev
+```
+
+L'application sera disponible sur `http://localhost:3000`.
+
+## Variables d'environnement
+
+Créez un fichier `.env.local` en local pour les tests, puis ajoutez exactement la meme variable dans Vercel :
+
+```bash
+MONGODB_URI=...
+```
+
+## Fonctionnement
+
+- La page `/` affiche un formulaire avec `nom` et `prenom`.
+- La route `POST /api/save-user` valide et nettoie les champs.
+- Les donnees sont enregistrees dans la base `test_db`, collection `users`.
+- Chaque document contient `nom`, `prenom` et `createdAt`.
+
+## Deploiement Vercel
+
+1. Mettez le projet dans un repo GitHub.
+2. Importez ce repo dans Vercel.
+3. Ajoutez la variable d'environnement `MONGODB_URI` dans `Settings > Environment Variables`.
+4. Redployez si besoin.
+
+Vercel generera ensuite une URL publique du type :
+
+```text
+https://mon-projet.vercel.app
+```
+
+## MongoDB Atlas
+
+Pour que l'API puisse ecrire dans Atlas apres deploiement :
+
+1. Creez ou utilisez un cluster Atlas.
+2. Creez un utilisateur base de donnees.
+3. Recuperez la chaine de connexion.
+4. Autorisez l'acces reseau adapte a votre configuration Atlas/Vercel.
