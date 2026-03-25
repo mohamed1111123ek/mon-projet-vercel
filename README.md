@@ -55,10 +55,11 @@ MONGODB_URI=...
 
 ## Fonctionnement
 
-- La page `/` affiche un formulaire avec `nom` et `prenom`.
-- La route `POST /api/save-user` valide et nettoie les champs.
+- La page `/` affiche un formulaire avec `nom`, `prenom` et un upload PDF.
+- La route `POST /api/save-user` recoit un formulaire `multipart/form-data`.
+- La route valide et nettoie les champs texte, verifie le PDF et impose une taille maximale de 5 Mo.
 - Les donnees sont enregistrees dans la base `test_db`, collection `users`.
-- Chaque document contient `nom`, `prenom` et `createdAt`.
+- Chaque document contient `nom`, `prenom`, `createdAt` et un objet `pdf` avec le nom du fichier, son type, sa taille et ses donnees binaires.
 
 ## Deploiement Vercel
 

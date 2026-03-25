@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 const styles = {
   page: {
@@ -55,6 +55,11 @@ const styles = {
     boxSizing: "border-box",
     backgroundColor: "#ffffff",
   },
+  fileHint: {
+    margin: 0,
+    fontSize: "0.85rem",
+    color: "#6b7280",
+  },
   button: {
     border: "none",
     borderRadius: "12px",
@@ -80,11 +85,13 @@ const initialForm = {
 
 export default function HomePage() {
   const [formData, setFormData] = useState(initialForm);
+  const [pdfFile, setPdfFile] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [feedback, setFeedback] = useState({
     type: "",
     text: "",
   });
+  const fileInputRef = useRef(null);
 
   function handleChange(event) {
     const { name, value } = event.target;
@@ -95,18 +102,34 @@ export default function HomePage() {
     }));
   }
 
+  function handleFileChange(event) {
+    const file = event.target.files?.[0] || null;
+    setPdfFile(file);
+  }
+
   async function handleSubmit(event) {
     event.preventDefault();
+
+    if (!pdfFile) {
+      setFeedback({
+        type: "error",
+        text: "Veuillez selectionner un fichier PDF.",
+      });
+      return;
+    }
+
     setIsLoading(true);
     setFeedback({ type: "", text: "" });
 
     try {
+      const body = new FormData();
+      body.append("nom", formData.nom);
+      body.append("prenom", formData.prenom);
+      body.append("pdf", pdfFile);
+
       const response = await fetch("/api/save-user", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(formData),
+        body,
       });
 
       const data = await response.json();
@@ -117,9 +140,13 @@ export default function HomePage() {
 
       setFeedback({
         type: "success",
-        text: "Utilisateur enregistre avec succes.",
+        text: "Utilisateur et PDF enregistres avec succes.",
       });
       setFormData(initialForm);
+      setPdfFile(null);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
     } catch (error) {
       setFeedback({
         type: "error",
@@ -136,7 +163,7 @@ export default function HomePage() {
         <h1 style={styles.title}>Ajouter un utilisateur</h1>
         <p style={styles.description}>
           Remplissez le formulaire ci-dessous pour enregistrer un nom et un
-          prenom dans MongoDB Atlas.
+          prenom avec un fichier PDF dans MongoDB Atlas.
         </p>
 
         <form onSubmit={handleSubmit} style={styles.form}>
@@ -174,6 +201,26 @@ export default function HomePage() {
               autoComplete="given-name"
               style={styles.input}
             />
+          </div>
+
+          <div style={styles.field}>
+            <label htmlFor="pdf" style={styles.label}>
+              PDF
+            </label>
+            <input
+              id="pdf"
+              name="pdf"
+              type="file"
+              accept="application/pdf"
+              required
+              disabled={isLoading}
+              onChange={handleFileChange}
+              ref={fileInputRef}
+              style={styles.input}
+            />
+            <p style={styles.fileHint}>
+              Fichier PDF uniquement, taille maximale 5 Mo.
+            </p>
           </div>
 
           <button
